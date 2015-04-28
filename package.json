@@ -1,0 +1,21 @@
+{
+  "name": "meshblu-arduino",
+  "repository": "octoblu/meshblu-arduino",
+  "version": "1.0.4",
+  "scripts": {
+    "start": "node command.js",
+    "test": "exit 0"
+  },
+  "dependencies": {
+    "meshblu": "^1.9.0",
+    "debug": "^2.1.0",
+    "firmata": "*",
+    "remote-io": "^0.4.0",
+    "johnny-five": "^0.8.40",
+    "meshblu-vserial": "*"
+  },
+  "keywords": [
+    "meshblu-connector",
+    "gateblu"
+  ]
+}
