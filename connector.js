@@ -2,7 +2,7 @@
 var Plugin = require('./index').Plugin;
 var meshblu = require('meshblu');
 var RemoteIO = require('remote-io');
-var SkynetSerialPort = require('meshblu-vserial').SerialPort;
+var SkynetSerialPort = require('meshblu-virtual-serial').SerialPort;
 var five = require("johnny-five")
 
 var Connector = function(config) {
@@ -36,19 +36,19 @@ var Connector = function(config) {
       });
     });
 
-//virtual port
-  var ssp = new SkynetSerialPort(conx, "*");
+  //virtual port
+    var ssp = new SkynetSerialPort(conx);
 
-  var io = new five.Board();
-
+    var io = new five.Board({repl: false});
     //virtual serialport + any io
     var remoteio = new RemoteIO({
       serial: ssp,
       io: io
     });
-
-
   });
+
+
+
 
   conx.on('message', function(){
     try {

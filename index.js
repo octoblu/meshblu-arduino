@@ -37,7 +37,7 @@ util.inherits(Plugin, EventEmitter);
 
 Plugin.prototype.onMessage = function(message){
   var payload = message.payload;
-  this.emit('message', {devices: ['*'], topic: 'echo', payload: payload});
+  // this.emit('message', {devices: ['*'], topic: '<!--  -->echo', payload: payload});
 };
 
 Plugin.prototype.onConfig = function(device){

@@ -7,12 +7,12 @@
     "test": "exit 0"
   },
   "dependencies": {
-    "meshblu": "^1.9.0",
-    "debug": "^2.1.0",
+    "debug": "^2.1.3",
     "firmata": "*",
-    "remote-io": "^0.4.0",
     "johnny-five": "^0.8.40",
-    "meshblu-vserial": "*"
+    "meshblu": "^1.9.0",
+    "meshblu-virtual-serial": "^1.0.0",
+    "remote-io": "^0.4.0"
   },
   "keywords": [
     "meshblu-connector",
