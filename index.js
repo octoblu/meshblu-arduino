@@ -5,10 +5,10 @@ var EventEmitter = require('events').EventEmitter;
 var _ = require("underscore");
 var five = require("johnny-five");
 //var board = new five.Board();
-var board = new five.Board({ port: "/dev/tty.usbmodemfd121" });
 var Oled = require('oled-js');
 var font = require('oled-font-5x7');
 var debug = require('debug')('dynamic');
+var board;
 
 
 var names = [];
@@ -18,6 +18,7 @@ var read = {};
 var components;
 var servo = [];
 var oled = [];
+var lcd = [];
 
 var boardReady = false;
 
@@ -44,6 +45,11 @@ var OPTIONS_SCHEMA = {
     "components"
   ],
   "properties": {
+    "port":{
+      "type": "string",
+      "description": "Leave this blank to auto-detect a FIRMATA Arduino board on serial.",
+      "required": false
+    },
     "components": {
       "type": "array",
       "maxItems": 2,
@@ -59,7 +65,7 @@ var OPTIONS_SCHEMA = {
           "action": {
             "title": "Action",
             "type": "string",
-            "enum": ["digitalWrite", "digitalRead", "analogWrite", "analogRead", "servo", "PCA9685-Servo", "oled-i2c"],
+            "enum": ["digitalWrite", "digitalRead", "analogWrite", "analogRead", "servo", "PCA9685-Servo", "oled-i2c" , "LCD-PCF8574A", "LCD-JHD1313M1"],
             "required": true
           },
           "pin": {
@@ -119,11 +125,7 @@ var testOptions = {
 };
 
 
-board.on('ready', function() {
 
-  boardReady = true;
-
-}); // end johnny-five board onReady
 
 
 function Plugin(){
@@ -133,6 +135,32 @@ function Plugin(){
   return this;
 }
 util.inherits(Plugin, EventEmitter);
+
+Plugin.prototype.StartBoard = function(device){
+
+  var self = this;
+
+  if(!boardReady){
+    if(device.options.port){
+      board = new five.Board({ port: device.options.port });
+    }else{
+
+      board = new five.Board();
+
+    }
+
+    board.on('ready', function() {
+
+      boardReady = true;
+
+
+
+    }); // end johnny-five board onReady
+
+  }
+
+
+}
 
 Plugin.prototype.onMessage = function(message){
   var payload = message.payload;
@@ -163,6 +191,24 @@ Plugin.prototype.onMessage = function(message){
         oled[payload.name].setCursor(1, 1);
         oled[payload.name].writeString(font, 3, payload.value , 1, true);
         break;
+        case "LCD-PCF8574A":
+            lcd[payload.name].clear();
+            if(payload.value.length <= 16){
+            lcd[payload.name].cursor(0,0).noAutoscroll().print(payload.value);
+          }else if (payload.value.length > 16){
+            lcd[payload.name].cursor(0,0).print(payload.value.substring(0,16));
+            lcd[payload.name].cursor(1,0).print(payload.value.substring(16,33));
+          }
+          break;
+        case "LCD-JHD1313M1":
+            lcd[payload.name].clear();
+            if(payload.value.length <= 16){
+            lcd[payload.name].cursor(0,0).noAutoscroll().print(payload.value);
+          }else if (payload.value.length > 16){
+            lcd[payload.name].cursor(0,0).print(payload.value.substring(0,16));
+            lcd[payload.name].cursor(1,0).print(payload.value.substring(16,33));
+          }
+          break;
     } //end switch case
 };
 
@@ -189,7 +235,7 @@ if(boardReady == true){
         names = [];
         read = {};
         oled = [];
-        //oled = [];
+        lcd = [];
 
         if (_.has(data.options, "components")) {
           components = data.options.components;
@@ -265,6 +311,26 @@ if(boardReady == true){
                   oled[payload.name].update();
                   names.push(payload.name);
               break;
+            case "LCD-PCF8574A":
+                lcd[payload.name] = new five.LCD({
+                              controller: "PCF8574A",
+                              rows: 2,
+                              cols: 16
+                              });
+                lcd[payload.name].cursor(0, 0).print("Skynet Lives");
+                names.push(payload.name);
+
+              break;
+            case "LCD-JHD1313M1":
+                lcd[payload.name] = new five.LCD({
+                              controller: "JHD1313M1",
+                              rows: 2,
+                              cols: 16
+                              });
+                lcd[payload.name].cursor(0, 0).print("Skynet Lives");
+                names.push(payload.name);
+              break;
+
 
 
           } //end switch case

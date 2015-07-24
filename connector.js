@@ -31,6 +31,8 @@ var Connector = function(config) {
         optionsSchema: plugin.optionsSchema,
         options:       plugin.options
       });
+
+      plugin.StartBoard(device);
     });
 
     plugin.Read();
