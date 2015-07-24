@@ -50,6 +50,13 @@ var OPTIONS_SCHEMA = {
       "description": "Leave this blank to auto-detect a FIRMATA Arduino board on serial.",
       "required": false
     },
+    "interval":{
+      "type": "string",
+      "enum": ["500", "1000", "1500", "2000", "200" ],
+      "description": "The Interval in milliseconds to send Sensor readings.",
+      "required": false,
+      "default": "500"
+    },
     "components": {
       "type": "array",
       "maxItems": 2,
@@ -87,7 +94,8 @@ var OPTIONS_SCHEMA = {
 };
 
 var OPTIONS_FORM = [
-
+  "port",
+  "interval",
   {
     "key": "components",
     "add": "New",
@@ -385,6 +393,10 @@ Plugin.prototype.setOptions = function(options){
 Plugin.prototype.Read = function(){
 var self = this;
 
+var interval = parseInt(self.options.interval) || 500;
+
+debug("interval is:", interval);
+
 setInterval(function() {
 
 
@@ -399,7 +411,7 @@ setInterval(function() {
     }
 
 
-  }, 1000);
+  }, interval);
 
 };
 

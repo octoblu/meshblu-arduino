@@ -1,7 +1,7 @@
 {
   "name": "meshblu-arduino",
   "repository": "octoblu/meshblu-arduino",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "scripts": {
     "start": "node command.js",
     "test": "exit 0"
