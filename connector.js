@@ -1,9 +1,6 @@
 'use strict';
 var Plugin = require('./index').Plugin;
 var meshblu = require('meshblu');
-var RemoteIO = require('remote-io');
-var SkynetSerialPort = require('meshblu-virtual-serial').SerialPort;
-var five = require("johnny-five")
 
 var Connector = function(config) {
   var conx = meshblu.createConnection({
@@ -36,18 +33,7 @@ var Connector = function(config) {
       });
     });
 
-  //virtual port
-    var ssp = new SkynetSerialPort(conx);
-
-    var io = new five.Board({repl: false});
-    //virtual serialport + any io
-    var remoteio = new RemoteIO({
-      serial: ssp,
-      io: io
-    });
-  });
-
-
+    plugin.Read();
 
 
   conx.on('message', function(){
@@ -72,7 +58,35 @@ var Connector = function(config) {
     conx.message(message);
   });
 
+  plugin.on('updateConfig', function(message){
+    conx.update({
+      uuid: config.uuid,
+      token: config.token,
+      "messageSchema": message.messageSchema,
+      "messageFormSchema":  message.messageFormSchema,
+      "optionsSchema":  message.optionsSchema,
+      "optionsForm":  message.optionsForm
+    });
+  });
+
+  plugin.on('updateOptions', function(message){
+    conx.update({
+      uuid: config.uuid,
+      token: config.token,
+      options:  message
+    });
+  });
+
+  plugin.on('config', function(){
+    conx.whoami({uuid: config.uuid}, function(device){
+      plugin.checkConfig(device);
+    });
+  });
+
   plugin.on('error', consoleError);
+
+});
+
 };
 
 module.exports = Connector;
