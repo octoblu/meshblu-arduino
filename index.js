@@ -19,6 +19,10 @@ var components;
 var servo = [];
 var oled = [];
 var lcd = [];
+var prevData = {};
+
+var map = [];
+var action_map = [];
 
 var boardReady = false;
 
@@ -38,7 +42,7 @@ var MESSAGE_SCHEMA = {
 };
 
 // connect
-var OPTIONS_SCHEMA = {
+var OPTIONS_SCHEMA =  {
   "type": "object",
   "title": "Component",
   "required": [
@@ -48,7 +52,8 @@ var OPTIONS_SCHEMA = {
     "port":{
       "type": "string",
       "description": "Leave this blank to auto-detect a FIRMATA Arduino board on serial.",
-      "required": false
+      "required": false,
+      "default": "auto-detect"
     },
     "interval":{
       "type": "string",
@@ -78,9 +83,14 @@ var OPTIONS_SCHEMA = {
           "pin": {
             "title": "Pin",
             "type": "string",
-            "description": "Pin or i2c address used for this component",
+            "description": "Pin used for this component",
             "required": true
-          }
+          },  "address": {
+              "title": "address",
+              "type": "string",
+              "description": "i2c address used for this component",
+              "required": true
+            }
 
         },
         "required": [
@@ -105,14 +115,22 @@ var OPTIONS_FORM = [
     "items": [
       "components[].name",
       "components[].action",
-      "components[].pin"
+      {
+        "key": "components[].pin",
+        "condition": "model.components[arrayIndex].action=='digitalRead' || model.components[arrayIndex].action=='digitalWrite' || model.components[arrayIndex].action=='analogRead' || model.components[arrayIndex].action=='analogWrite' || model.components[arrayIndex].action=='servo'"
+      },
+      {
+        "key": "components[].address",
+        "condition": "model.components[arrayIndex].action=='oled-i2c' || model.components[arrayIndex].action=='LCD-PCF8574A' || model.components[arrayIndex].action=='LCD-JHD1313M1' || model.components[arrayIndex].action=='PCA9685-Servo'"
+      }
     ]
   }, {
     "type": "submit",
     "style": "btn-info",
     "title": "OK"
   }
-];
+]
+;
 
 var FORMSCHEMA = ["*"];
 
@@ -149,7 +167,7 @@ Plugin.prototype.StartBoard = function(device){
   var self = this;
 
   if(!boardReady){
-    if(device.options.port){
+    if(device.options.port != "auto-detect"){
       board = new five.Board({ port: device.options.port });
     }else{
 
@@ -172,49 +190,66 @@ Plugin.prototype.StartBoard = function(device){
 
 Plugin.prototype.onMessage = function(message){
   var payload = message.payload;
-  var value = parseInt(payload.value);
+      payload.name = names[payload.component];
     if (!component[payload.name])
       return;
 
     switch (component[payload.name].action) {
       case "digitalWrite":
+        var value = parseInt(payload.state);
         board.digitalWrite(component[payload.name].pin, value);
         break;
       case "analogWrite":
+        var value = payload.value;
         board.analogWrite(component[payload.name].pin, value);
         break;
       case "servo":
         debug('servo', servo);
-        servo[payload.name].stop();
-        servo[payload.name].to(value);
+        if(payload.servo_action == "to"){
+          var value = payload.to_value;
+          servo[payload.name].stop();
+          servo[payload.name].to(value);
+        }else if(payload.servo_action == "sweep"){
+          servo.sweep([payload.sweep.min, payload.sweep.max]);
+        }else if(payload.servo_action == "stop"){
+          servo[payload.name].stop();
+        }
         break;
       case "PCA9685-Servo":
+
+      if(payload.servo_action == "to"){
+        var value = payload.to_value;
         servo[payload.name].stop();
         servo[payload.name].to(value);
+      }else if(payload.servo_action == "sweep"){
+        servo.sweep([payload.sweep.min, payload.sweep.max]);
+      }else if(payload.servo_action == "stop"){
+        servo[payload.name].stop();
+      }
         break;
       case "oled-i2c":
         oled[payload.name].turnOnDisplay();
         oled[payload.name].clearDisplay();
         oled[payload.name].update();
         oled[payload.name].setCursor(1, 1);
-        oled[payload.name].writeString(font, 3, payload.value , 1, true);
+        oled[payload.name].writeString(font, 3, payload.text , 1, true);
         break;
         case "LCD-PCF8574A":
             lcd[payload.name].clear();
-            if(payload.value.length <= 16){
-            lcd[payload.name].cursor(0,0).noAutoscroll().print(payload.value);
-          }else if (payload.value.length > 16){
-            lcd[payload.name].cursor(0,0).print(payload.value.substring(0,16));
-            lcd[payload.name].cursor(1,0).print(payload.value.substring(16,33));
+            if(payload.text.length <= 16){
+            lcd[payload.name].cursor(0,0).noAutoscroll().print(payload.text);
+          }else if (payload.text.length > 16){
+            lcd[payload.name].cursor(0,0).print(payload.text.substring(0,16));
+            lcd[payload.name].cursor(1,0).print(payload.text.substring(16,33));
           }
           break;
         case "LCD-JHD1313M1":
             lcd[payload.name].clear();
-            if(payload.value.length <= 16){
-            lcd[payload.name].cursor(0,0).noAutoscroll().print(payload.value);
-          }else if (payload.value.length > 16){
-            lcd[payload.name].cursor(0,0).print(payload.value.substring(0,16));
-            lcd[payload.name].cursor(1,0).print(payload.value.substring(16,33));
+            if(payload.text.length <= 16){
+            lcd[payload.name].cursor(0,0).noAutoscroll().print(payload.text);
+          }else if (payload.text.length > 16){
+            lcd[payload.name].cursor(0,0).print(payload.text.substring(0,16));
+            lcd[payload.name].cursor(1,0).print(payload.text.substring(16,33));
           }
           break;
     } //end switch case
@@ -224,6 +259,13 @@ Plugin.prototype.onMessage = function(message){
 
 Plugin.prototype.checkConfig = function(data){
 
+  if(boardReady){
+
+if(_.isEqual(data.options, prevData.options)){
+    return;
+  }
+
+
       if (_.has(data.options, "components")) {
         this.configBoard(data);
       } else if (!(_.has(data.options, "components"))) {
@@ -231,11 +273,17 @@ Plugin.prototype.checkConfig = function(data){
         data.options = testOptions;
         this.configBoard(data);
       }
+  prevData = data;
 
+}else{
+  this.emit('config');
+}
 
 };
 
 Plugin.prototype.configBoard = function(data) {
+
+  var self = this;
 
 if(boardReady == true){
         component = [];
@@ -244,7 +292,8 @@ if(boardReady == true){
         read = {};
         oled = [];
         lcd = [];
-
+        map = [];
+        action_map = [];
         if (_.has(data.options, "components")) {
           components = data.options.components;
         } else {
@@ -254,15 +303,20 @@ if(boardReady == true){
         components.forEach(function(payload) {
           debug(payload);
 
-          if(!(_.has(payload, "pin"))){
-            return;
+          if((!(_.has(payload, "pin")))){
+            if(!(_.has(payload, "pin"))){
+              return;
+            }
           }
 
-          component[payload.name] = {
-            "pin": payload.pin,
-            "action": payload.action
-          };
+          if(((_.has(payload, "pin")))){
+            component[payload.name] = {
+              "pin": payload.pin,
+              "action": payload.action
+            };
+          }
 
+          console.log(component);
           switch (payload.action) {
             case "digitalRead":
               debug("digitalRead");
@@ -299,18 +353,20 @@ if(boardReady == true){
               names.push(payload.name);
               break;
             case "PCA9685-Servo":
+              var address = parseInt(payload.address) || 0x40;
               servo[payload.name] = new five.Servo({
-                address: 0x40,
+                address: address,
                 controller: "PCA9685",
                 pin: payload.pin,
               });
               names.push(payload.name);
             case "oled-i2c":
                   debug("oledddoo");
+                    var address = parseInt(payload.address) || 0x3C;
                   var opts = {
                         width: 128,
                         height: 64,
-                        address: parseInt(payload.pin)
+                        address: address
                       };
                   oled[payload.name] = new Oled(board, five, opts);
                   oled[payload.name].clearDisplay();
@@ -346,20 +402,191 @@ if(boardReady == true){
 
         }); // end for each
 
+  /*   for(var i = 0; i < names.length; i++){
+
+        var name = names[i];
+        console.log(name);
+        console.log(component[name]);
+
+          var data = { "value": {
+            "name": name,
+            "action": component[name].action
+          },
+          "name" : name,
+          "group" : component[name].action
+        };
+
+          map.push(data);
+        }
+
+
+
         MESSAGE_SCHEMA = {
           "type": "object",
           "properties": {
-            "name": {
-              "title": "Name",
-              "type": "string",
-              "enum": names
+            "component": {
+              "title": "Component",
+              "type": "object"
+            },
+            "to_value": {
+              "title": "Value",
+              "type": "string"
             },
             "value": {
               "title": "Value",
+              "type": "number"
+            },
+            "text": {
+              "title": "Text",
               "type": "string"
+            },
+            "state": {
+              "title": "state",
+              "type": "string",
+              "enum": ["0", "1"]
+            },
+            "servo_action": {
+              "type" : "string",
+              "enum" : ["to", "sweep", "stop"]
+            },
+            "sweep":{
+              "type": "object",
+              "properties":{
+                "min": {
+                  "type" : "number"
+                },
+                "max": {
+                  "type" : "number"
+                }
+              }
+            }
+          }
+        };
+
+        FORMSCHEMA = [
+          {
+            "key": "component",
+            "type": "select",
+            "titleMap": map
+          },
+
+          {"key": "servo_action",
+           "condition": "model.component.action == 'servo'"
+          },
+          {"key": "sweep",
+           "condition": "model.servo_action == 'sweep' && model.component.action == 'servo'"
+          },
+          {"key": "to_value",
+           "condition": "model.servo_action == 'to' && model.component.action == 'servo'"
+         },
+          {"key": "state",
+           "condition": "model.component.action == 'digitalWrite'"
+         },
+         {"key": "value",
+          "condition": "model.component.action == 'analogWrite'"
+         },
+         {"key": "text",
+          "condition": "model.component.action == 'oled-i2c' || model.component.action == 'LCD-PCF8574A' || model.component.action == 'LCD-JHD1313M1'"
+         }
+       ];
+
+*/
+
+for(var i = 0; i < names.length; i++){
+
+      var name = names[i];
+      console.log(name);
+      console.log(component[name]);
+
+        var data = { "value": i,
+        "name" : name,
+        "group" : component[name].action
+      };
+
+        action_map[i] = component[name].action;
+        map.push(data);
+      }
+
+
+
+      MESSAGE_SCHEMA = {
+        "type": "object",
+        "properties": {
+          "component": {
+            "title": "Component",
+            "type": "number"
+          },
+          "data": {
+            "title": "hidden",
+            "type": "object",
+            "default": action_map
+          },
+          "to_value": {
+            "title": "Value",
+            "type": "string"
+          },
+          "value": {
+            "title": "Value",
+            "type": "number"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          },
+          "state": {
+            "title": "state",
+            "type": "string",
+            "enum": ["0", "1"]
+          },
+          "servo_action": {
+            "type" : "string",
+            "enum" : ["to", "sweep", "stop"]
+          },
+          "sweep":{
+            "type": "object",
+            "properties":{
+              "min": {
+                "type" : "number"
+              },
+              "max": {
+                "type" : "number"
+              }
             }
           }
         }
+      };
+
+      FORMSCHEMA = [
+        {
+          "key": "data",
+          "type": "hidden"
+          },
+        {
+          "key": "component",
+          "type": "select",
+          "titleMap": map
+        },
+
+        {"key": "servo_action",
+         "condition": "model.data[model.component] == 'servo'"
+        },
+        {"key": "sweep",
+         "condition": "model.servo_action == 'sweep' && model.data[model.component] == 'servo'"
+        },
+        {"key": "to_value",
+         "condition": "model.servo_action == 'to' && model.data[model.component] == 'servo'"
+       },
+        {"key": "state",
+         "condition": "model.data[model.component] == 'digitalWrite'"
+       },
+       {"key": "value",
+        "condition": "model.data[model.component] == 'analogWrite'"
+       },
+       {"key": "text",
+        "condition": "model.data[model.component] == 'oled-i2c' || model.data[model.component] == 'LCD-PCF8574A' || model.data[model.component] == 'LCD-JHD1313M1'"
+       }
+     ];
+
 
 
         this.emit('updateConfig', {
@@ -370,8 +597,10 @@ if(boardReady == true){
         });
 
       }else{
+        setTimeout(function () {
+          self.emit('config');
+        }, 1000)
 
-        this.emit('config');
 
       }
 
