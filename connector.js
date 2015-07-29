@@ -32,9 +32,13 @@ var Connector = function(config) {
         options:       plugin.options
       });
 
-conx.whoami({uuid: config.uuid}, function(device){
-      plugin.StartBoard(device);
-      });
+      setTimeout(function () {
+        conx.whoami({uuid: config.uuid}, function(device){
+          plugin.StartBoard(device);
+        });
+
+
+      }, 5000);
     });
 
     plugin.Read();
