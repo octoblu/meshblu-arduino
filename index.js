@@ -135,6 +135,8 @@ var OPTIONS_FORM = [
 var FORMSCHEMA = ["*"];
 
 var testOptions = {
+  "port": "auto-detect",
+  "interval": "500",
   "components": [{
     "name": "Led_Pin_13",
     "action": "digitalWrite",
@@ -155,21 +157,7 @@ var testOptions = {
 
 
 function Plugin(){
-  this.options = {
-    "components": [{
-      "name": "Led_Pin_13",
-      "action": "digitalWrite",
-      "pin": "13"
-    }, {
-      "name": "some_sensor",
-      "action": "analogRead",
-      "pin": "3"
-    }, {
-      "name": "Servo1",
-      "action": "servo",
-      "pin": "6"
-    }]
-  };
+  this.options = testOptions;
   this.messageSchema = MESSAGE_SCHEMA;
   this.optionsSchema = OPTIONS_SCHEMA;
   return this;
@@ -575,5 +563,6 @@ setInterval(function() {
 module.exports = {
   messageSchema: MESSAGE_SCHEMA,
   optionsSchema: OPTIONS_SCHEMA,
+  options: testOptions,
   Plugin: Plugin
 };

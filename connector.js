@@ -35,9 +35,7 @@ var Connector = function(config) {
         conx.whoami({uuid: config.uuid}, function(device){
           plugin.StartBoard(device);
         });
-
-
-      }, 5000);
+      }, 3000);
     });
 
     plugin.Read();
