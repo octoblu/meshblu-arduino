@@ -155,7 +155,21 @@ var testOptions = {
 
 
 function Plugin(){
-  this.options = {};
+  this.options = {
+    "components": [{
+      "name": "Led_Pin_13",
+      "action": "digitalWrite",
+      "pin": "13"
+    }, {
+      "name": "some_sensor",
+      "action": "analogRead",
+      "pin": "3"
+    }, {
+      "name": "Servo1",
+      "action": "servo",
+      "pin": "6"
+    }]
+  };
   this.messageSchema = MESSAGE_SCHEMA;
   this.optionsSchema = OPTIONS_SCHEMA;
   return this;
@@ -508,7 +522,7 @@ for(var i = 0; i < names.length; i++){
           "optionsForm": OPTIONS_FORM
         });
 
-        this.emit('updateOptions', data.options);
+      //  this.emit('updateOptions', data.options);
 
       }else{
         setTimeout(function () {
