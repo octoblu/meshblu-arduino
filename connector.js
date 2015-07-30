@@ -23,7 +23,7 @@ var Connector = function(config) {
 
   conx.on('ready', function(){
     conx.whoami({uuid: config.uuid}, function(device){
-      plugin.setOptions(device.options || {});
+      plugin.setOptions(device.options || plugin.options);
       conx.update({
         uuid: config.uuid,
         token: config.token,
