@@ -508,6 +508,8 @@ for(var i = 0; i < names.length; i++){
           "optionsForm": OPTIONS_FORM
         });
 
+        this.emit('updateOptions', data.options);
+
       }else{
         setTimeout(function () {
           self.emit('config');

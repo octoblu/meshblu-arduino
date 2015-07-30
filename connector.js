@@ -27,7 +27,6 @@ var Connector = function(config) {
       conx.update({
         uuid: config.uuid,
         token: config.token,
-        messageSchema: plugin.messageSchema,
         optionsSchema: plugin.optionsSchema,
         options:       plugin.options
       });
