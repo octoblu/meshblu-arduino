@@ -192,10 +192,11 @@ Plugin.prototype.StartBoard = function(device){
 
 Plugin.prototype.onMessage = function(message){
   var payload = message.payload;
-      payload.name = names[payload.component];
+      payload.name = payload.component;
     if (!component[payload.name])
       return;
 
+debug(component[payload.name]);
     switch (component[payload.name].action) {
       case "digitalWrite":
         var value = parseInt(payload.state);
@@ -203,7 +204,9 @@ Plugin.prototype.onMessage = function(message){
         break;
       case "analogWrite":
         var value = payload.value;
-        board.analogWrite(component[payload.name].pin, value);
+        debug("analog STUFF", value);
+        debug("pinsssc", component[payload.name].pin);
+        board.analogWrite(parseInt(component[payload.name].pin), value);
         break;
       case "servo":
         debug('servo', servo);
@@ -345,12 +348,12 @@ if(boardReady == true){
               });
               break;
             case "analogWrite":
-              board.pinMode(payload.pin, five.Pin.PWM);
+              board.pinMode(parseInt(payload.pin), five.Pin.PWM);
               names.push(payload.name);
               break;
             case "servo":
               servo[payload.name] = new five.Servo({
-                pin: payload.pin,
+                pin: parseInt(payload.pin),
               });
               names.push(payload.name);
               break;
@@ -406,21 +409,76 @@ if(boardReady == true){
 
 
 
-for(var i = 0; i < names.length; i++){
+      var servo_ = [];
+      var digital_ = [];
+      var analog_ = [];
+      var text_ = [];
 
-      var name = names[i];
-      console.log(name);
-      console.log(component[name]);
+      for(var i = 0; i < names.length; i++){
 
-        var data = { "value": i,
-        "name" : name,
-        "group" : component[name].action
-      };
+            var name = names[i];
+            console.log(name);
+            console.log(component[name]);
 
-        action_map[i] = component[name].action;
-        map.push(data);
-      }
+              var data = { "value": name,
+              "name" : name,
+              "group" : component[name].action
+            };
 
+            if(component[name].action == "servo"){
+              servo_.push(name);
+            }else if(component[name].action == "digitalWrite"){
+              digital_.push(name);
+            }else if(component[name].action == "analogWrite"){
+              analog_.push(name);
+            }else{
+              text_.push(name);
+            }
+
+              map.push(data);
+            }
+
+            var servo_condition = "model.component == 'aNeverEndingSchema'";
+            var digital_condition =  "model.component == 'aNeverEndingSchema'";
+            var analog_condition =  "model.component == 'aNeverEndingSchema'";
+            var text_condition =  "model.component == 'aNeverEndingSchema'";
+
+          if(servo_ !== undefined){
+                for(var i = 0; i < servo_.length; i++){
+                  if(i == 0){
+                    servo_condition = "model.component == '" + servo_[i] + "'";
+                  }else{
+                    servo_condition = servo_condition + " || model.component == '" + servo_[i] + "'";
+                  }
+              }
+            }
+          if(digital_ !== undefined){
+                  for(var i = 0; i < digital_.length; i++){
+                    if(i == 0){
+                      digital_condition = "model.component == '" + digital_[i] + "'";
+                    }else{
+                      digital_condition = digital_condition + " || model.component == '" + digital_[i] + "'";
+                    }
+                }
+              }
+          if(analog_ !== undefined){
+                    for(var i = 0; i < analog_.length; i++){
+                      if(i == 0){
+                        analog_condition = "model.component == '" + analog_[i] + "'";
+                      }else{
+                        analog_condition = analog_condition + " || model.component == '" + analog_[i] + "'";
+                      }
+                  }
+                }
+          if(text_ !== undefined){
+                      for(var i = 0; i < text_.length; i++){
+                        if(i == 0){
+                          text_condition = "model.component == '" + text_[i] + "'";
+                        }else{
+                          text_condition = text_condition + " || model.component == '" + text_[i] + "'";
+                        }
+                    }
+                  }
 
 
       MESSAGE_SCHEMA = {
@@ -428,12 +486,7 @@ for(var i = 0; i < names.length; i++){
         "properties": {
           "component": {
             "title": "Component",
-            "type": "number"
-          },
-          "data": {
-            "title": "hidden",
-            "type": "object",
-            "default": action_map
+            "type": "string"
           },
           "to_value": {
             "title": "Value",
@@ -470,11 +523,11 @@ for(var i = 0; i < names.length; i++){
         }
       };
 
+
+      var servo_sweep = "model.servo_action == 'sweep' && " + servo_condition;
+      var servo_to = "model.servo_action == 'to' && " + servo_condition;
+
       FORMSCHEMA = [
-        {
-          "key": "data",
-          "type": "hidden"
-          },
         {
           "key": "component",
           "type": "select",
@@ -482,24 +535,25 @@ for(var i = 0; i < names.length; i++){
         },
 
         {"key": "servo_action",
-         "condition": "model.data[model.component] == 'servo'"
+         "condition": servo_condition
         },
         {"key": "sweep",
-         "condition": "model.servo_action == 'sweep' && model.data[model.component] == 'servo'"
+         "condition": servo_sweep
         },
         {"key": "to_value",
-         "condition": "model.servo_action == 'to' && model.data[model.component] == 'servo'"
+         "condition": servo_to
        },
         {"key": "state",
-         "condition": "model.data[model.component] == 'digitalWrite'"
+         "condition": digital_condition
        },
        {"key": "value",
-        "condition": "model.data[model.component] == 'analogWrite'"
+        "condition": analog_condition
        },
        {"key": "text",
-        "condition": "model.data[model.component] == 'oled-i2c' || model.data[model.component] == 'LCD-PCF8574A' || model.data[model.component] == 'LCD-JHD1313M1'"
+        "condition": text_condition
        }
      ];
+
 
 
 
