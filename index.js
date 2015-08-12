@@ -77,7 +77,7 @@ var OPTIONS_SCHEMA =  {
           "action": {
             "title": "Action",
             "type": "string",
-            "enum": ["digitalWrite", "digitalRead", "analogWrite", "analogRead", "servo", "PCA9685-Servo", "oled-i2c" , "LCD-PCF8574A", "LCD-JHD1313M1"],
+            "enum": ["digitalWrite", "digitalRead", "analogWrite", "analogRead", "servo", "PCA9685-Servo", "oled-i2c" , "LCD-PCF8574A", "LCD-JHD1313M1c"],
             "required": true
           },
           "pin": {
@@ -95,7 +95,6 @@ var OPTIONS_SCHEMA =  {
         },
         "required": [
           "name",
-          "pin",
           "action"
         ]
       }
@@ -317,6 +316,13 @@ if(boardReady == true){
           if(((_.has(payload, "pin")))){
             component[payload.name] = {
               "pin": payload.pin,
+              "action": payload.action
+            };
+          }
+
+          if(((_.has(payload, "pin")))){
+            component[payload.name] = {
+              "address": payload.address,
               "action": payload.action
             };
           }
