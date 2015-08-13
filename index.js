@@ -308,7 +308,7 @@ if(boardReady == true){
           debug(payload);
 
           if((!(_.has(payload, "pin")))){
-            if(!(_.has(payload, "pin"))){
+            if(!(_.has(payload, "address"))){
               return;
             }
           }
