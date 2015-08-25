@@ -19,6 +19,7 @@ var components;
 var servo = [];
 var oled = [];
 var lcd = [];
+var accel= [];
 var prevData = {};
 
 var map = [];
@@ -77,19 +78,19 @@ var OPTIONS_SCHEMA =  {
           "action": {
             "title": "Action",
             "type": "string",
-            "enum": ["digitalWrite", "digitalRead", "analogWrite", "analogRead", "servo", "PCA9685-Servo", "oled-i2c" , "LCD-PCF8574A", "LCD-JHD1313M1c"],
+            "enum": ["digitalWrite", "digitalRead", "analogWrite", "analogRead", "servo", "PCA9685-Servo", "oled-i2c" , "LCD-PCF8574A", "LCD-JHD1313M1c", "MPU6050"],
             "required": true
           },
           "pin": {
             "title": "Pin",
             "type": "string",
             "description": "Pin used for this component",
-            "required": true
+            "required": false
           },  "address": {
               "title": "address",
               "type": "string",
               "description": "i2c address used for this component",
-              "required": true
+              "required": false
             }
 
         },
@@ -289,340 +290,382 @@ Plugin.prototype.configBoard = function(data) {
 
   var self = this;
 
-if(boardReady == true){
-        component = [];
-        servo = [];
-        names = [];
-        read = {};
-        oled = [];
-        lcd = [];
-        map = [];
-        action_map = [];
-        if (_.has(data.options, "components")) {
-          components = data.options.components;
-        } else {
-          components = testOptions.components;
-        }
+  if(boardReady == true){
+          component = [];
+          servo = [];
+          names = [];
+          read = {};
+          oled = [];
+          accel= [];
+          lcd = [];
+          map = [];
+          action_map = [];
 
-        components.forEach(function(payload) {
-          debug(payload);
-
-          if((!(_.has(payload, "pin")))){
-            if(!(_.has(payload, "address"))){
-              return;
-            }
+          if (_.has(data.options, "components")) {
+            components = data.options.components;
+          } else {
+            components = testOptions.components;
           }
 
-          if(((_.has(payload, "pin")))){
-            component[payload.name] = {
-              "pin": payload.pin,
-              "action": payload.action
-            };
-          }
+          components.forEach(function(payload) {
+            debug(payload);
 
-          if(((_.has(payload, "pin")))){
-            component[payload.name] = {
-              "address": payload.address,
-              "action": payload.action
-            };
-          }
-
-          console.log(component);
-          switch (payload.action) {
-            case "digitalRead":
-              debug("digitalRead");
-              board.pinMode(payload.pin, five.Pin.INPUT);
-              board.digitalRead(payload.pin, function(value) {
-                if(_.has(component, payload.name)){
-                read[payload.name] = value;
-                debug(value);
-                }
-              });
-
-              break;
-            case "digitalWrite":
-              board.pinMode(payload.pin, board.MODES.OUTPUT);
-              names.push(payload.name);
-              break;
-            case "analogRead":
-
-              board.pinMode(payload.pin, five.Pin.ANALOG);
-              board.analogRead(payload.pin, function(value) {
-                if(_.has(component, payload.name)){
-                read[payload.name] = value;
-                }
-              });
-              break;
-            case "analogWrite":
-              board.pinMode(parseInt(payload.pin), five.Pin.PWM);
-              names.push(payload.name);
-              break;
-            case "servo":
-              servo[payload.name] = new five.Servo({
-                pin: parseInt(payload.pin),
-              });
-              names.push(payload.name);
-              break;
-            case "PCA9685-Servo":
-              var address = parseInt(payload.address) || 0x40;
-              servo[payload.name] = new five.Servo({
-                address: address,
-                controller: "PCA9685",
-                pin: payload.pin,
-              });
-              names.push(payload.name);
-            case "oled-i2c":
-                  debug("oledddoo");
-                    var address = parseInt(payload.address) || 0x3C;
-                  var opts = {
-                        width: 128,
-                        height: 64,
-                        address: address
-                      };
-                  oled[payload.name] = new Oled(board, five, opts);
-                  oled[payload.name].clearDisplay();
-                  oled[payload.name].setCursor(1, 1);
-                  oled[payload.name].writeString(font, 3, 'Skynet Lives', 1, true);
-                  oled[payload.name].update();
-                  names.push(payload.name);
-              break;
-            case "LCD-PCF8574A":
-                lcd[payload.name] = new five.LCD({
-                              controller: "PCF8574A",
-                              rows: 2,
-                              cols: 16
-                              });
-                lcd[payload.name].cursor(0, 0).print("Skynet Lives");
-                names.push(payload.name);
-
-              break;
-            case "LCD-JHD1313M1":
-                lcd[payload.name] = new five.LCD({
-                              controller: "JHD1313M1",
-                              rows: 2,
-                              cols: 16
-                              });
-                lcd[payload.name].cursor(0, 0).print("Skynet Lives");
-                names.push(payload.name);
-              break;
-
-
-
-          } //end switch case
-
-
-        }); // end for each
-
-
-
-      var servo_ = [];
-      var digital_ = [];
-      var analog_ = [];
-      var text_ = [];
-
-      for(var i = 0; i < names.length; i++){
-
-            var name = names[i];
-            console.log(name);
-            console.log(component[name]);
-
-              var data = { "value": name,
-              "name" : name,
-              "group" : component[name].action
-            };
-
-            if(component[name].action == "servo"){
-              servo_.push(name);
-            }else if(component[name].action == "digitalWrite"){
-              digital_.push(name);
-            }else if(component[name].action == "analogWrite"){
-              analog_.push(name);
-            }else{
-              text_.push(name);
-            }
-
-              map.push(data);
-            }
-
-            var servo_condition = "model.component == 'aNeverEndingSchema'";
-            var digital_condition =  "model.component == 'aNeverEndingSchema'";
-            var analog_condition =  "model.component == 'aNeverEndingSchema'";
-            var text_condition =  "model.component == 'aNeverEndingSchema'";
-
-          if(servo_ !== undefined){
-                for(var i = 0; i < servo_.length; i++){
-                  if(i == 0){
-                    servo_condition = "model.component == '" + servo_[i] + "'";
-                  }else{
-                    servo_condition = servo_condition + " || model.component == '" + servo_[i] + "'";
-                  }
+            if((!(_.has(payload, "pin")))){
+              if(!(_.has(payload, "address"))){
+                return;
               }
             }
-          if(digital_ !== undefined){
-                  for(var i = 0; i < digital_.length; i++){
+
+            if(((_.has(payload, "pin")))){
+              component[payload.name] = {
+                "pin": payload.pin,
+                "action": payload.action
+              };
+            }
+
+            if(((_.has(payload, "address")))){
+              component[payload.name] = {
+                "address": payload.address,
+                "action": payload.action
+              };
+            }
+
+            console.log(component);
+            switch (payload.action) {
+              case "digitalRead":
+                debug("digitalRead");
+                board.pinMode(payload.pin, five.Pin.INPUT);
+                board.digitalRead(payload.pin, function(value) {
+                  if(_.has(component, payload.name)){
+                  read[payload.name] = value;
+                  //debug(value);
+                  }
+                });
+
+                break;
+              case "digitalWrite":
+                board.pinMode(payload.pin, board.MODES.OUTPUT);
+                names.push(payload.name);
+                break;
+              case "analogRead":
+
+                board.pinMode(payload.pin, five.Pin.ANALOG);
+                board.analogRead(payload.pin, function(value) {
+                  if(_.has(component, payload.name)){
+                  read[payload.name] = value;
+                  }
+                });
+                break;
+              case "analogWrite":
+                board.pinMode(parseInt(payload.pin), five.Pin.PWM);
+                names.push(payload.name);
+                break;
+              case "servo":
+                servo[payload.name] = new five.Servo({
+                  pin: parseInt(payload.pin),
+                });
+                names.push(payload.name);
+                break;
+              case "servo-continuous":
+                servo[payload.name] = new five.Servo.Continuous(parseInt(payload.pin)).stop();
+                names.push(payload.name);
+                break;
+
+              case "PCA9685-Servo":
+                var address = parseInt(payload.address) || 0x40;
+                servo[payload.name] = new five.Servo({
+                  address: address,
+                  controller: "PCA9685",
+                  pin: payload.pin
+                });
+                names.push(payload.name);
+              case "oled-i2c":
+                    debug("oledddoo");
+                      var address = parseInt(payload.address) || 0x3C;
+                    var opts = {
+                          width: 128,
+                          height: 64,
+                          address: address
+                        };
+                    oled[payload.name] = new Oled(board, five, opts);
+                    oled[payload.name].clearDisplay();
+                    oled[payload.name].setCursor(1, 1);
+                    oled[payload.name].writeString(font, 3, 'Skynet Lives', 1, true);
+                    oled[payload.name].update();
+                    names.push(payload.name);
+                break;
+              case "LCD-PCF8574A":
+                  lcd[payload.name] = new five.LCD({
+                                controller: "PCF8574A",
+                                rows: 2,
+                                cols: 16
+                                });
+                  lcd[payload.name].cursor(0, 0).print("Skynet Lives");
+                  names.push(payload.name);
+
+                break;
+              case "LCD-JHD1313M1":
+                  lcd[payload.name] = new five.LCD({
+                                controller: "JHD1313M1",
+                                rows: 2,
+                                cols: 16
+                                });
+                  lcd[payload.name].cursor(0, 0).print("Skynet Lives");
+                  names.push(payload.name);
+                break;
+                case "MPU6050":
+                  var addr = parseInt(payload.address) || 0x68;
+                  accel[payload.name] = new five.IMU({
+                    controller: "MPU6050",
+                    address: addr
+                  });
+                  accel[payload.name].on("data", function(err, data) {
+                    values = {};
+                    values["accel"] = {"x": this.accelerometer.x , "y": this.accelerometer.y, "z": this.accelerometer.z};
+                    values["gyro"] = {"x": this.gyro.x , "y": this.gyro.y, "z": this.gyro.z};
+                    values["temp"] = {"temperature" : this.temperature.celsius};
+                    read[payload.name] = values;
+                  });
+                  break;
+
+
+
+            } //end switch case
+
+
+          }); // end for each
+
+
+
+        var servo_ = [];
+        var digital_ = [];
+        var analog_ = [];
+        var text_ = [];
+        var continuous_ = [];
+
+        for(var i = 0; i < names.length; i++){
+
+              var name = names[i];
+              console.log(name);
+              console.log(component[name]);
+
+                var data = { "value": name,
+                "name" : name,
+                "group" : component[name].action
+              };
+
+              if(component[name].action == "servo"){
+                servo_.push(name);
+              }else if(component[name].action == "digitalWrite"){
+                digital_.push(name);
+              }else if(component[name].action == "servo-continuous"){
+                continuous_.push(name);
+              }else if(component[name].action == "analogWrite"){
+                analog_.push(name);
+              }else{
+                text_.push(name);
+              }
+
+                map.push(data);
+              }
+
+              var servo_condition = "model.component == 'aNeverEndingSchema'";
+              var digital_condition =  "model.component == 'aNeverEndingSchema'";
+              var analog_condition =  "model.component == 'aNeverEndingSchema'";
+              var text_condition =  "model.component == 'aNeverEndingSchema'";
+              var servoc_condition =  "model.component == 'aNeverEndingSchema'";
+
+            if(servo_ !== undefined){
+                  for(var i = 0; i < servo_.length; i++){
                     if(i == 0){
-                      digital_condition = "model.component == '" + digital_[i] + "'";
+                      servo_condition = "model.component == '" + servo_[i] + "'";
                     }else{
-                      digital_condition = digital_condition + " || model.component == '" + digital_[i] + "'";
+                      servo_condition = servo_condition + " || model.component == '" + servo_[i] + "'";
                     }
                 }
               }
-          if(analog_ !== undefined){
-                    for(var i = 0; i < analog_.length; i++){
+            if(digital_ !== undefined){
+                    for(var i = 0; i < digital_.length; i++){
                       if(i == 0){
-                        analog_condition = "model.component == '" + analog_[i] + "'";
+                        digital_condition = "model.component == '" + digital_[i] + "'";
                       }else{
-                        analog_condition = analog_condition + " || model.component == '" + analog_[i] + "'";
+                        digital_condition = digital_condition + " || model.component == '" + digital_[i] + "'";
                       }
                   }
                 }
-          if(text_ !== undefined){
-                      for(var i = 0; i < text_.length; i++){
+            if(analog_ !== undefined){
+                      for(var i = 0; i < analog_.length; i++){
                         if(i == 0){
-                          text_condition = "model.component == '" + text_[i] + "'";
+                          analog_condition = "model.component == '" + analog_[i] + "'";
                         }else{
-                          text_condition = text_condition + " || model.component == '" + text_[i] + "'";
+                          analog_condition = analog_condition + " || model.component == '" + analog_[i] + "'";
                         }
                     }
                   }
+            if(text_ !== undefined){
+                        for(var i = 0; i < text_.length; i++){
+                          if(i == 0){
+                            text_condition = "model.component == '" + text_[i] + "'";
+                          }else{
+                            text_condition = text_condition + " || model.component == '" + text_[i] + "'";
+                          }
+                      }
+                    }
+                    if(continuous_ !== undefined){
+                              for(var i = 0; i < continuous_.length; i++){
+                                if(i == 0){
+                                  servoc_condition = "model.component == '" + continuous_[i] + "'";
+                                }else{
+                                  servoc_condition = servoc_condition + " || model.component == '" + continuous_[i] + "'";
+                                }
+                            }
+                          }
 
 
-      MESSAGE_SCHEMA = {
-        "type": "object",
-        "properties": {
-          "component": {
-            "title": "Component",
-            "type": "string"
-          },
-          "to_value": {
-            "title": "Value",
-            "type": "string"
-          },
-          "value": {
-            "title": "Value",
-            "type": "number"
-          },
-          "text": {
-            "title": "Text",
-            "type": "string"
-          },
-          "state": {
-            "title": "state",
-            "type": "string",
-            "enum": ["0", "1"]
-          },
-          "servo_action": {
-            "type" : "string",
-            "enum" : ["to", "sweep", "stop"]
-          },
-          "sweep":{
-            "type": "object",
-            "properties":{
-              "min": {
-                "type" : "number"
-              },
-              "max": {
-                "type" : "number"
+        MESSAGE_SCHEMA = {
+          "type": "object",
+          "properties": {
+            "component": {
+              "title": "Component",
+              "type": "string"
+            },
+            "to_value": {
+              "title": "Value",
+              "type": "string"
+            },
+            "value": {
+              "title": "Value",
+              "type": "number"
+            },
+            "direction": {
+              "title": "Direction",
+              "type": "string",
+              "enum": ["CW", "CCW", "STOP"]
+            },
+            "text": {
+              "title": "Text",
+              "type": "string"
+            },
+            "state": {
+              "title": "state",
+              "type": "string",
+              "enum": ["0", "1"]
+            },
+            "servo_action": {
+              "type" : "string",
+              "enum" : ["to", "sweep", "stop"]
+            },
+            "sweep":{
+              "type": "object",
+              "properties":{
+                "min": {
+                  "type" : "number"
+                },
+                "max": {
+                  "type" : "number"
+                }
               }
             }
           }
+        };
+
+
+        var servo_sweep = "model.servo_action == 'sweep' && " + servo_condition;
+        var servo_to = "model.servo_action == 'to' && " + servo_condition;
+
+        FORMSCHEMA = [
+          {
+            "key": "component",
+            "type": "select",
+            "titleMap": map
+          },
+
+          {"key": "servo_action",
+           "condition": servo_condition
+          },
+          {"key": "sweep",
+           "condition": servo_sweep
+          },
+          {"key": "to_value",
+           "condition": servo_to
+         },
+          {"key": "state",
+           "condition": digital_condition
+         },
+         {"key": "value",
+          "condition": analog_condition
+         },
+         {"key": "text",
+          "condition": text_condition
+        },
+        {"key": "direction",
+         "condition": servoc_condition
         }
-      };
-
-
-      var servo_sweep = "model.servo_action == 'sweep' && " + servo_condition;
-      var servo_to = "model.servo_action == 'to' && " + servo_condition;
-
-      FORMSCHEMA = [
-        {
-          "key": "component",
-          "type": "select",
-          "titleMap": map
-        },
-
-        {"key": "servo_action",
-         "condition": servo_condition
-        },
-        {"key": "sweep",
-         "condition": servo_sweep
-        },
-        {"key": "to_value",
-         "condition": servo_to
-       },
-        {"key": "state",
-         "condition": digital_condition
-       },
-       {"key": "value",
-        "condition": analog_condition
-       },
-       {"key": "text",
-        "condition": text_condition
-       }
-     ];
+       ];
 
 
 
 
-        this.emit('updateConfig', {
-          "messageSchema": MESSAGE_SCHEMA,
-          "messageFormSchema": FORMSCHEMA,
-          "optionsSchema": OPTIONS_SCHEMA,
-          "optionsForm": OPTIONS_FORM
+          this.emit('updateConfig', {
+            "messageSchema": MESSAGE_SCHEMA,
+            "messageFormSchema": FORMSCHEMA,
+            "optionsSchema": OPTIONS_SCHEMA,
+            "optionsForm": OPTIONS_FORM
+          });
+
+        //  this.emit('updateOptions', data.options);
+
+        }else{
+          setTimeout(function () {
+            self.emit('config');
+          }, 1000)
+
+
+        }
+
+        }; // end configBoard
+
+
+
+  Plugin.prototype.onConfig = function(device){
+    this.setOptions(device.options||{});
+    this.emit('config');
+  };
+
+
+
+  Plugin.prototype.setOptions = function(options){
+    this.options = options;
+  };
+
+  Plugin.prototype.Read = function(){
+  var self = this;
+
+  var interval = parseInt(self.options.interval) || 1000;
+
+  debug("interval is:", interval);
+
+  setInterval(function() {
+
+
+      if (!(_.isEmpty(read))) {
+      //  debug(read);
+
+        self.emit('message',{
+          "devices": "*",
+          "payload": read
         });
-
-      //  this.emit('updateOptions', data.options);
-
-      }else{
-        setTimeout(function () {
-          self.emit('config');
-        }, 1000)
-
 
       }
 
-      }; // end configBoard
 
+    }, interval);
 
+  };
 
-Plugin.prototype.onConfig = function(device){
-  this.setOptions(device.options||{});
-  this.emit('config');
-};
-
-
-
-Plugin.prototype.setOptions = function(options){
-  this.options = options;
-};
-
-Plugin.prototype.Read = function(){
-var self = this;
-
-var interval = parseInt(self.options.interval) || 500;
-
-debug("interval is:", interval);
-
-setInterval(function() {
-
-
-    if (!(_.isEmpty(read))) {
-      debug(read);
-
-      self.emit('message',{
-        "devices": "*",
-        "payload": read
-      });
-
-    }
-
-
-  }, interval);
-
-};
-
-module.exports = {
-  messageSchema: MESSAGE_SCHEMA,
-  optionsSchema: OPTIONS_SCHEMA,
-  options: testOptions,
-  Plugin: Plugin
-};
+  module.exports = {
+    messageSchema: MESSAGE_SCHEMA,
+    optionsSchema: OPTIONS_SCHEMA,
+    options: testOptions,
+    Plugin: Plugin
+  };
