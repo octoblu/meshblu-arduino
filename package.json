@@ -1,22 +1,18 @@
 {
   "name": "meshblu-arduino",
   "repository": "octoblu/meshblu-arduino",
-  "version": "3.0.6",
+  "version": "3.0.7",
   "scripts": {
     "start": "node command.js",
     "test": "exit 0"
   },
   "dependencies": {
-    "node-gyp": "^3.0.1",
     "debug": "^2.1.3",
     "meshblu": "^1.9.0",
     "johnny-five": "^0.8.58",
     "oled-font-5x7": "^1.0.0",
     "oled-js": "^3.1.1",
-    "underscore": "^1.8.3",
-    "color-string": "^0.3.0",
-    "es6-collections": "^0.5.1",
-    "firmata": "^0.5.1"
+    "underscore": "^1.8.3"
   },
   "keywords": [
     "meshblu-connector",
