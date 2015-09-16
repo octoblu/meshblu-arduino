@@ -1,18 +1,41 @@
 {
   "name": "meshblu-arduino",
   "repository": "octoblu/meshblu-arduino",
-  "version": "3.0.7",
+  "version": "3.1.0",
+  "main": "connector.js",
   "scripts": {
+    "preinstall": "node -e \"try{require('./skip-install.js')}catch(e){}\"",
     "start": "node command.js",
     "test": "exit 0"
   },
   "dependencies": {
-    "debug": "^2.1.3",
-    "meshblu": "^1.9.0",
-    "johnny-five": "^0.8.58",
+    "debug": "^2.1.0",
+    "johnny-five": "^0.8.91",
+    "lodash": "^3.10.1",
+    "meshblu": "^1.30.1",
     "oled-font-5x7": "^1.0.0",
-    "oled-js": "^3.1.1",
-    "underscore": "^1.8.3"
+    "oled-js": "^3.1.1"
+  },
+  "bundledDependencies": [
+    "request",
+    "tar",
+    "fstream"
+  ],
+  "platformDependencies": {
+    "darwin": [
+      "xcode"
+    ],
+    "win32": [
+      "Python 2.7",
+      "Visual Studio (Express)"
+    ],
+    "win64": [
+      "Python 2.7",
+      "Visual Studio (Express)"
+    ],
+    "linux": [],
+    "android": null,
+    "ios": null
   },
   "keywords": [
     "meshblu-connector",
