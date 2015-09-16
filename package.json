@@ -1,7 +1,7 @@
 {
   "name": "meshblu-arduino",
   "repository": "octoblu/meshblu-arduino",
-  "version": "3.1.0",
+  "version": "3.1.1",
   "main": "connector.js",
   "scripts": {
     "preinstall": "node -e \"try{require('./skip-install.js')}catch(e){}\"",
