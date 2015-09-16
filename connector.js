@@ -65,7 +65,7 @@ Connector.prototype.onMessage = function(message){
 Connector.prototype.onReady = function(){
   var self = this;
   self.conx.whoami({uuid: self.config.uuid}, function(device){
-    self.plugin.setOptions(device.options || {});
+    self.plugin.setOptions(device.options || self.plugin.options);
     self.conx.update({
       uuid:          self.config.uuid,
       token:         self.config.token,

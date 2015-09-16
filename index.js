@@ -23,6 +23,7 @@ var map = [];
 var action_map = [];
 
 var boardReady = false;
+var started = false;
 
 var MESSAGE_SCHEMA = {
   "type": "object",
@@ -160,6 +161,7 @@ util.inherits(Plugin, EventEmitter);
 Plugin.prototype.StartBoard = function(device){
 
   var self = this;
+  started = true;
 
   if(!boardReady){
     if(device.options.port != "auto-detect"){
@@ -172,6 +174,7 @@ Plugin.prototype.StartBoard = function(device){
 
     board.on('ready', function() {
       boardReady = true;
+      this.Read();
     }); // end johnny-five board onReady
 
   }
@@ -582,8 +585,9 @@ Plugin.prototype.configBoard = function(data) {
 }; // end configBoard
 
 Plugin.prototype.onConfig = function(device){
-  this.setOptions(device.options||{});
-  this.emit('config');
+  this.setOptions(device.options||testOptions);
+  if(!started){this.StartBoard(device);}
+  this.checkConfig(device);
 };
 
 Plugin.prototype.setOptions = function(options){
