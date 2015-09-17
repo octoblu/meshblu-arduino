@@ -174,7 +174,8 @@ Plugin.prototype.StartBoard = function(device){
 
     board.on('ready', function() {
       boardReady = true;
-      this.Read();
+      self.configBoard(device);
+      self.Read();
     }); // end johnny-five board onReady
 
   }
