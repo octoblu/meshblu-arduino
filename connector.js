@@ -1,8 +1,11 @@
 'use strict';
-var Plugin = require('./index').Plugin;
-var util = require('util');
+var Plugin       = require('./index').Plugin;
+var util         = require('util');
 var EventEmitter = require('events').EventEmitter;
-var meshblu = require('meshblu');
+var meshblu      = require('meshblu');
+var packageJSON  = require('./package.json');
+var _            = require('lodash');
+
 var bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; }
 
 var Connector = function(config){
@@ -65,14 +68,18 @@ Connector.prototype.onMessage = function(message){
 Connector.prototype.onReady = function(){
   var self = this;
   self.conx.whoami({uuid: self.config.uuid}, function(device){
-    self.plugin.setOptions(device.options || self.plugin.options);
+    self.plugin.setOptions(device.options || {});
+    var oldRecentVersions = device.recentVersions || [];
+    var recentVersions = _.union(oldRecentVersions, [packageJSON.version]);
     self.conx.update({
       uuid:          self.config.uuid,
       token:         self.config.token,
       messageSchema: self.plugin.messageSchema,
       optionsSchema: self.plugin.optionsSchema,
       options:       self.plugin.options,
-      initializing:  false
+      initializing:  false,
+      currentVersion: packageJSON.version,
+      recentVersions: recentVersions
     });
   });
 };

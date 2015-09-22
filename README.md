@@ -1,5 +1,11 @@
 ## meshblu-arduino
 
+[![Build Status](https://travis-ci.org/octoblu/meshblu-arduino.svg?branch=master)](https://travis-ci.org/octoblu/meshblu-arduino)
+[![Code Climate](https://codeclimate.com/github/octoblu/meshblu-arduino/badges/gpa.svg)](https://codeclimate.com/github/octoblu/meshblu-arduino)
+[![Test Coverage](https://codeclimate.com/github/octoblu/meshblu-arduino/badges/coverage.svg)](https://codeclimate.com/github/octoblu/meshblu-arduino)
+[![npm version](https://badge.fury.io/js/meshblu-arduino.svg)](http://badge.fury.io/js/meshblu-arduino)
+[![Gitter](https://badges.gitter.im/octoblu/help.svg)](https://gitter.im/octoblu/help)
+
 A Meshblu connector for use in Octoblu or with other services.
 
 ### Setup Instructions
