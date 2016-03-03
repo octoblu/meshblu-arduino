@@ -1,7 +1,7 @@
 {
   "name": "meshblu-arduino",
   "repository": "octoblu/meshblu-arduino",
-  "version": "3.1.5",
+  "version": "3.1.6",
   "main": "connector.js",
   "scripts": {
     "preinstall": "node -e \"try{require('./skip-install.js')}catch(e){}\"",
@@ -10,12 +10,10 @@
   },
   "dependencies": {
     "debug": "^2.2.0",
-    "johnny-five": "^0.8.91",
+    "kryten": "^1.0.5",
     "lodash": "^3.10.1",
     "meshblu": "^1.30.1",
-    "meshblu-config": "^3.1.1",
-    "oled-font-5x7": "^1.0.0",
-    "oled-js": "^3.1.1"
+    "meshblu-config": "^3.1.1"
   },
   "bundledDependencies": [
     "request",

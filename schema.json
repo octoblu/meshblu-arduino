@@ -1,0 +1,110 @@
+{
+"testOptions": {
+  "port": "auto-detect",
+  "interval": "500",
+  "components": [{
+    "name": "Led_Pin_13",
+    "action": "digitalWrite",
+    "pin": "13"
+  }, {
+    "name": "some_sensor",
+    "action": "analogRead",
+    "pin": "3"
+  }, {
+    "name": "Servo1",
+    "action": "servo",
+    "pin": "6"
+  }]
+},
+
+"OPTIONS_SCHEMA": {
+  "type": "object",
+  "title": "Component",
+  "required": ["components"],
+  "properties": {
+    "port": {
+      "type": "string",
+      "description": "Leave this blank to auto-detect a FIRMATA Arduino board on serial.",
+      "required": false,
+      "default": "auto-detect"
+    },
+    "interval": {
+      "type": "string",
+      "enum": ["500", "1000", "1500", "2000", "200"],
+      "description": "The Interval in milliseconds to send Sensor readings.",
+      "required": false,
+      "default": "500"
+    },
+    "components": {
+      "type": "array",
+      "maxItems": 2,
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string",
+            "description": "Name this component anything you like. (i.e Left_Motor). Sensor output will show up under this name in payload",
+            "required": true
+          },
+          "action": {
+            "title": "Action",
+            "type": "string",
+            "enum": ["digitalWrite", "digitalRead", "analogWrite", "analogRead", "servo", "PCA9685-Servo", "oled-i2c", "LCD-PCF8574A", "LCD-JHD1313M1c", "MPU6050"],
+            "required": true
+          },
+          "pin": {
+            "title": "Pin",
+            "type": "string",
+            "description": "Pin used for this component",
+            "required": false
+          },
+          "address": {
+            "title": "address",
+            "type": "string",
+            "description": "i2c address used for this component",
+            "required": false
+          }
+        },
+        "required": ["name", "action"]
+      }
+    }
+  }
+},
+"OPTIONS_FORM": [
+  "port", "interval", {
+    "key": "components",
+    "add": "New",
+    "style": {
+      "add": "btn-success"
+    },
+    "items": [
+      "components[].name", "components[].action", {
+        "key": "components[].pin",
+        "condition": "model.components[arrayIndex].action==\"digitalRead\" || model.components[arrayIndex].action==\"digitalWrite\" || model.components[arrayIndex].action==\"analogRead\" || model.components[arrayIndex].action==\"analogWrite\" || model.components[arrayIndex].action==\"servo\""
+      }, {
+        "key": "components[].address",
+        "condition": "model.components[arrayIndex].action==\"oled-i2c\" || model.components[arrayIndex].action==\"LCD-PCF8574A\" || model.components[arrayIndex].action==\"LCD-JHD1313M1\" || model.components[arrayIndex].action==\"PCA9685-Servo\""
+      }
+    ]
+  }, {
+    "type": "submit",
+    "style": "btn-info",
+    "title": "OK"
+  }
+],
+"MESSAGE_SCHEMA": {
+  "type": "object",
+  "properties": {
+    "name": {
+      "title": "Name",
+      "type": "string",
+      "enum": []
+    },
+    "value": {
+      "title": "Value",
+      "type": "string"
+    }
+  }
+}
+}

@@ -96,7 +96,6 @@ Connector.prototype.run = function(){
   self.plugin.on('error', self.emitError);
 
   self.plugin.on('update', function(properties){
-    self.emit('update', properties);
     self.conx.update(properties);
   });
 
