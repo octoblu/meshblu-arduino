@@ -37,7 +37,6 @@
     },
     "components": {
       "type": "array",
-      "maxItems": 2,
       "items": {
         "type": "object",
         "properties": {
@@ -50,7 +49,7 @@
           "action": {
             "title": "Action",
             "type": "string",
-            "enum": ["digitalWrite", "digitalRead", "analogWrite", "analogRead", "servo", "PCA9685-Servo", "oled-i2c", "LCD-PCF8574A", "LCD-JHD1313M1c", "MPU6050"],
+            "enum": ["digitalWrite", "digitalRead", "analogWrite", "analogRead", "servo", "PCA9685-Servo", "oled-i2c", "LCD-PCF8574A", "LCD-JHD1313M1c", "MPU6050", "esc"],
             "required": true
           },
           "pin": {
@@ -81,7 +80,7 @@
     "items": [
       "components[].name", "components[].action", {
         "key": "components[].pin",
-        "condition": "model.components[arrayIndex].action==\"digitalRead\" || model.components[arrayIndex].action==\"digitalWrite\" || model.components[arrayIndex].action==\"analogRead\" || model.components[arrayIndex].action==\"analogWrite\" || model.components[arrayIndex].action==\"servo\""
+        "condition": "model.components[arrayIndex].action==\"digitalRead\" || model.components[arrayIndex].action==\"digitalWrite\" || model.components[arrayIndex].action==\"analogRead\" || model.components[arrayIndex].action==\"analogWrite\" || model.components[arrayIndex].action==\"servo\" || model.components[arrayIndex].action==\"esc\""
       }, {
         "key": "components[].address",
         "condition": "model.components[arrayIndex].action==\"oled-i2c\" || model.components[arrayIndex].action==\"LCD-PCF8574A\" || model.components[arrayIndex].action==\"LCD-JHD1313M1\" || model.components[arrayIndex].action==\"PCA9685-Servo\""

@@ -54,14 +54,16 @@ Plugin.prototype.onMessage = function(message){
 
 Plugin.prototype.setOptions = function(device){
   var self = this;
-  self.options = device.options || testOptions
+  self.options = device.options || testOptions;
+  if(!_.isEqual(self.options, prev)){
+    kryten.configure(self.options);
+    prev = self.options;
+  }
 };
 
 Plugin.prototype.onConfig = function(device){
-  if(!_.isEqual(device.options, prev)){
-    kryten.configure(device.options);
-    prev = device.options;
-  }
+  var self = this;
+  self.setOptions(device);
 };
 
 module.exports = {

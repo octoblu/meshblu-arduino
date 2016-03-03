@@ -68,7 +68,7 @@ Connector.prototype.onMessage = function(message){
 Connector.prototype.onReady = function(){
   var self = this;
   self.conx.whoami({uuid: self.config.uuid}, function(device){
-    self.plugin.setOptions(device.options || {});
+    self.plugin.setOptions(device || {});
     var oldRecentVersions = device.recentVersions || [];
     var recentVersions = _.union(oldRecentVersions, [packageJSON.version]);
     self.conx.update({
