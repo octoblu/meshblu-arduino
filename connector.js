@@ -96,7 +96,11 @@ Connector.prototype.run = function(){
   self.plugin.on('error', self.emitError);
 
   self.plugin.on('update', function(properties){
-    self.conx.update(properties);
+    var opts = _.merge({
+      uuid:          self.config.uuid,
+      token:         self.config.token
+    }, properties);
+    self.conx.update(opts);
   });
 
   self.plugin.on('message', function(message){
