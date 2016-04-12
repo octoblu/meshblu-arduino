@@ -29,12 +29,14 @@ Plugin.prototype.startKryten = function () {
 
   kryten.on('ready', function(){
     kryten.on('schema', function(schema) {
-      Plugin.prototype.update({
-        "messageSchema": schema.MESSAGE_SCHEMA,
-        "messageFormSchema": schema.FORMSCHEMA,
-        "optionsSchema": defaultSchema.OPTIONS_SCHEMA,
-        "optionsForm": defaultSchema.OPTIONS_FORM
-      });
+      if(!_.isEqual(self.options, prev)){
+        Plugin.prototype.update({
+          "messageSchema": schema.MESSAGE_SCHEMA,
+          "messageFormSchema": schema.FORMSCHEMA,
+          "optionsSchema": defaultSchema.OPTIONS_SCHEMA,
+          "optionsForm": defaultSchema.OPTIONS_FORM
+        });
+      }
     });
 
     kryten.on('data', function(data){
@@ -55,7 +57,7 @@ Plugin.prototype.onMessage = function(message){
 Plugin.prototype.setOptions = function(device){
   var self = this;
   self.options = device.options || testOptions;
-  if(!_.isEqual(self.options, prev)){
+  if(!_.isEqual(device.options, prev)){
     kryten.configure(self.options);
     prev = self.options;
   }
